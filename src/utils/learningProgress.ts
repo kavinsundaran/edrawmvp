@@ -14,7 +14,11 @@ export interface LearningState {
   lastUpdated: string;
 }
 
-const STORAGE_KEY = 'edraw_learning_state_v1';
+const STORAGE_KEY_BASE = 'edraw_learning_state_v2';
+
+function getStorageKey(uid?: string | null): string {
+  return uid ? `${STORAGE_KEY_BASE}_${uid}` : STORAGE_KEY_BASE;
+}
 
 export const DEFAULT_LEARNING_STATE: LearningState = {
   studentName: 'Student',
@@ -27,10 +31,10 @@ export const DEFAULT_LEARNING_STATE: LearningState = {
   lastUpdated: new Date().toISOString(),
 };
 
-export function loadLearningState(): LearningState {
+export function loadLearningState(uid?: string | null): LearningState {
   if (typeof window === 'undefined') return DEFAULT_LEARNING_STATE;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(getStorageKey(uid));
     if (!raw) return DEFAULT_LEARNING_STATE;
     const parsed = JSON.parse(raw);
     return {
@@ -48,11 +52,11 @@ export function loadLearningState(): LearningState {
   }
 }
 
-export function saveLearningState(state: LearningState): LearningState {
+export function saveLearningState(state: LearningState, uid?: string | null): LearningState {
   const next = { ...state, lastUpdated: new Date().toISOString() };
   if (typeof window !== 'undefined') {
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      window.localStorage.setItem(getStorageKey(uid), JSON.stringify(next));
     } catch {
       // Ignore storage quota errors in sandboxed iframes
     }

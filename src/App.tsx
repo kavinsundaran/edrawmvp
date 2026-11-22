@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AppRoute } from './types/modules';
 import { AppHeader } from './components/navigation/AppHeader';
 import { AppSidebar, SidebarSectionId } from './components/navigation/AppSidebar';
@@ -14,10 +14,21 @@ import { LinesModule } from './modules/lines/LinesModule';
 import { QuestionToGraphicsGenerator } from './components/questionGenerator/QuestionToGraphicsGenerator';
 import { ScanQuestionModal } from './components/ScanQuestionModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthLayout } from './components/auth/AuthLayout';
+import { LoginPage } from './components/auth/LoginPage';
+import { RegisterPage } from './components/auth/RegisterPage';
+import {
+  VerifyEmailCard,
+  IssuedEdidWelcomeCard,
+} from './components/auth/VerifyAndEdidScreen';
+import {
+  studentProfileToLearningState,
+  syncLearningProgressToFirestore,
+} from './services/studentAccountService';
 import {
   LearningState,
   DEFAULT_LEARNING_STATE,
-  loadLearningState,
   saveLearningState,
   getTodayWeekdayIndex,
 } from './utils/learningProgress';
@@ -44,7 +55,28 @@ export const resolveRoute = (input?: string): AppRoute => {
   return '/dashboard';
 };
 
-export default function App() {
+const AppShell: React.FC = () => {
+  const {
+    firebaseUser,
+    studentProfile,
+    isAuthReady,
+    needsEmailVerification,
+    newlyIssuedProfile,
+    signOutStudent,
+    updateStudentDetails,
+  } = useAuth();
+
+  // Auth screen toggle ('login' | 'register')
+  const [authMode, setAuthMode] = useState<'login' | 'register'>(() => {
+    if (typeof window !== 'undefined') {
+      const target = `${window.location.pathname}${window.location.hash}`.toLowerCase();
+      if (target.includes('register') || target.includes('signup')) {
+        return 'register';
+      }
+    }
+    return 'login';
+  });
+
   // Theme state
   const [isDark, setIsDark] = useState<boolean>(false);
   const [isGlobalScanOpen, setIsGlobalScanOpen] = useState<boolean>(false);
@@ -80,15 +112,56 @@ export default function App() {
   const [currentRoute, setCurrentRoute] = useState<AppRoute>(() => resolveRoute());
   const [dashboardAnchor, setDashboardAnchor] = useState<'dashboard' | 'roadmap' | 'progress'>('dashboard');
 
-  // Real session & localStorage learning progress
-  const [learningState, setLearningState] = useState<LearningState>(() => loadLearningState());
+  // Strict per-student isolated learning state hydrated from Firestore studentProfile
+  const [learningState, setLearningState] = useState<LearningState>(DEFAULT_LEARNING_STATE);
+  const syncTimerRef = useRef<number | null>(null);
+  const activeUid = studentProfile?.uid || null;
 
-  const updateLearning = useCallback((updater: (prev: LearningState) => LearningState) => {
-    setLearningState((prev) => saveLearningState(updater(prev)));
+  useEffect(() => {
+    if (!studentProfile) {
+      setLearningState(DEFAULT_LEARNING_STATE);
+      return;
+    }
+    const hydrated = studentProfileToLearningState(studentProfile);
+    saveLearningState(hydrated, studentProfile.uid);
+    setLearningState(hydrated);
+  }, [studentProfile?.uid]);
+
+  const scheduleFirestoreSync = useCallback((uid: string, nextState: LearningState) => {
+    if (syncTimerRef.current !== null) {
+      window.clearTimeout(syncTimerRef.current);
+    }
+    syncTimerRef.current = window.setTimeout(() => {
+      syncLearningProgressToFirestore(uid, nextState).catch((err) => {
+        console.error('Failed to sync learning progress:', err);
+      });
+    }, 800);
   }, []);
 
-  // Track module visits automatically on route change
   useEffect(() => {
+    return () => {
+      if (syncTimerRef.current !== null) {
+        window.clearTimeout(syncTimerRef.current);
+      }
+    };
+  }, []);
+
+  const updateLearning = useCallback(
+    (updater: (prev: LearningState) => LearningState) => {
+      setLearningState((prev) => {
+        const next = saveLearningState(updater(prev), activeUid);
+        if (activeUid) {
+          scheduleFirestoreSync(activeUid, next);
+        }
+        return next;
+      });
+    },
+    [activeUid, scheduleFirestoreSync]
+  );
+
+  // Track module visits automatically on route change when signed in
+  useEffect(() => {
+    if (!activeUid) return;
     const visitedId =
       currentRoute === '/projection-of-points'
         ? 'points'
@@ -107,10 +180,11 @@ export default function App() {
         };
       });
     }
-  }, [currentRoute, updateLearning]);
+  }, [currentRoute, activeUid, updateLearning]);
 
-  // Track active studio duration cleanly while user works in any module
+  // Track active studio duration cleanly while authenticated user works in any module
   useEffect(() => {
+    if (!activeUid) return;
     if (currentRoute === '/dashboard' || currentRoute === '/') return;
     const interval = window.setInterval(() => {
       updateLearning((prev) => ({
@@ -119,7 +193,7 @@ export default function App() {
       }));
     }, 15000);
     return () => window.clearInterval(interval);
-  }, [currentRoute, updateLearning]);
+  }, [currentRoute, activeUid, updateLearning]);
 
   // Listen to both popstate and hashchange events for maximum sandbox/iframe compatibility
   useEffect(() => {
@@ -243,6 +317,56 @@ export default function App() {
   const [pendingScannedLine, setPendingScannedLine] = useState<any>(null);
   const [pendingScannedPoint, setPendingScannedPoint] = useState<any>(null);
 
+  // 1. Auth Loading Splash
+  if (!isAuthReady) {
+    return (
+      <div
+        className={`min-h-screen font-['Space_Grotesk',sans-serif] flex items-center justify-center ${
+          isDark ? 'dark bg-slate-950 text-slate-100' : 'bg-[#F8F7FC] text-[#202044]'
+        }`}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#7138E8] animate-pulse" />
+          <p className="text-sm font-medium text-[#77758F] dark:text-slate-400">
+            Loading EDraw Studio...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Email Verification Pending Screen
+  if (needsEmailVerification) {
+    return (
+      <AuthLayout isDark={isDark} onToggleTheme={() => setIsDark(!isDark)}>
+        <VerifyEmailCard />
+      </AuthLayout>
+    );
+  }
+
+  // 3. Unauthenticated Gate -> Login or Registration Page
+  if (!firebaseUser || !studentProfile) {
+    return (
+      <AuthLayout isDark={isDark} onToggleTheme={() => setIsDark(!isDark)}>
+        {authMode === 'register' ? (
+          <RegisterPage onSwitchToLogin={() => setAuthMode('login')} />
+        ) : (
+          <LoginPage onSwitchToRegister={() => setAuthMode('register')} />
+        )}
+      </AuthLayout>
+    );
+  }
+
+  // 4. Newly Registered Student -> Display Unique EDID-XXXX Confirmation Card
+  if (newlyIssuedProfile) {
+    return (
+      <AuthLayout isDark={isDark} onToggleTheme={() => setIsDark(!isDark)}>
+        <IssuedEdidWelcomeCard />
+      </AuthLayout>
+    );
+  }
+
+  // 5. Authenticated Student Studio Workspace
   return (
     <div
       className={`min-h-screen font-['Space_Grotesk',sans-serif] ${
@@ -273,7 +397,8 @@ export default function App() {
                 currentRoute={currentRoute}
                 onNavigate={navigateTo}
                 onSelectSection={handleSelectSidebarSection}
-                studentName={learningState.studentName}
+                studentName={learningState.studentName || studentProfile.fullName}
+                studentEdid={studentProfile.edid}
                 hpColor={hpColor}
                 vpColor={vpColor}
                 onChangeHpColor={setHpColor}
@@ -284,6 +409,7 @@ export default function App() {
                 onOpenScanModal={() => setIsGlobalScanOpen(true)}
                 onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
                 onOpenSettings={() => setIsSettingsOpen(true)}
+                onSignOut={signOutStudent}
               />
 
               {/* Dynamic Route View protected by ErrorBoundary */}
@@ -345,6 +471,8 @@ export default function App() {
                     EDraw Engineering Graphics
                   </span>
                   <span>·</span>
+                  <span>{studentProfile.edid}</span>
+                  <span>·</span>
                   <span>V1 Points · V2 Straight Lines</span>
                 </div>
                 <div className="text-center sm:text-right">
@@ -377,10 +505,16 @@ export default function App() {
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        studentName={learningState.studentName}
+        studentName={learningState.studentName || studentProfile.fullName}
+        studentEdid={studentProfile.edid}
+        studentEmail={studentProfile.email}
+        studentCollege={studentProfile.college}
+        studentDetails={studentProfile.studentDetails}
         onChangeStudentName={(name) =>
           updateLearning((prev) => ({ ...prev, studentName: name }))
         }
+        onSaveStudentProfile={updateStudentDetails}
+        onSignOut={signOutStudent}
         hpColor={hpColor}
         vpColor={vpColor}
         onChangeHpColor={setHpColor}
@@ -389,9 +523,22 @@ export default function App() {
         isDark={isDark}
         onToggleTheme={() => setIsDark(!isDark)}
         onResetProgress={() =>
-          setLearningState(saveLearningState(DEFAULT_LEARNING_STATE))
+          updateLearning((prev) => ({
+            ...DEFAULT_LEARNING_STATE,
+            studentName: prev.studentName,
+          }))
         }
       />
     </div>
+  );
+};
+
+export default function App() {
+  return (
+    <ErrorBoundary fallbackTitle="Application Error">
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

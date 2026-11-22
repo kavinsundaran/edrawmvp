@@ -16,6 +16,7 @@ import {
   Ruler,
   FileText,
   BookOpen,
+  LogOut,
 } from 'lucide-react';
 import { PlaneColorPicker } from '../PlaneColorPicker';
 import { AppRoute } from '../../types/modules';
@@ -29,6 +30,7 @@ interface AppHeaderProps {
     route?: AppRoute
   ) => void;
   studentName: string;
+  studentEdid?: string;
   hpColor: string;
   vpColor: string;
   onChangeHpColor: (c: string) => void;
@@ -39,6 +41,7 @@ interface AppHeaderProps {
   onOpenScanModal: () => void;
   onOpenMobileSidebar: () => void;
   onOpenSettings: () => void;
+  onSignOut?: () => void;
 }
 
 interface SearchTopicItem {
@@ -54,6 +57,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onNavigate,
   onSelectSection,
   studentName,
+  studentEdid,
   hpColor,
   vpColor,
   onChangeHpColor,
@@ -64,6 +68,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onOpenScanModal,
   onOpenMobileSidebar,
   onOpenSettings,
+  onSignOut,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -218,8 +223,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               )}
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-medium text-[#77758F] dark:text-slate-400 leading-tight">
-                Welcome
+              <div className="text-xs font-medium text-[#77758F] dark:text-slate-400 leading-tight flex items-center gap-1.5">
+                <span>Welcome</span>
+                {studentEdid && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span className="font-mono font-semibold tabular-nums text-[#7138E8] dark:text-purple-300">
+                      {studentEdid}
+                    </span>
+                  </>
+                )}
               </div>
               <div className="text-base sm:text-lg font-bold text-[#202044] dark:text-slate-100 truncate leading-tight mt-0.5">
                 {studentName}
@@ -365,12 +378,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <button
           type="button"
           onClick={onOpenSettings}
-          title={`${studentName} · Workspace Settings`}
+          title={`${studentName}${studentEdid ? ` · ${studentEdid}` : ''} · Workspace Settings`}
           aria-label="Profile and workspace settings"
           className="w-9 h-9 rounded-full bg-gradient-to-br from-[#7138E8] to-[#9565F5] text-white text-xs font-bold flex items-center justify-center shadow-xs hover:opacity-90 transition-opacity cursor-pointer shrink-0"
         >
           {initials}
         </button>
+
+        {onSignOut && (
+          <button
+            type="button"
+            onClick={onSignOut}
+            title="Sign out"
+            aria-label="Sign out"
+            className="w-9 h-9 rounded-xl bg-[#F8F7FC] dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-[#77758F] hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 border border-[#E8E2F5] dark:border-slate-700 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          >
+            <LogOut className="w-[16px] h-[16px]" />
+          </button>
+        )}
       </div>
     </header>
   );

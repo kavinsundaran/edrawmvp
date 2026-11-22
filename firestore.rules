@@ -1,0 +1,187 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default deny all reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Primitives & Hardened Validation Helpers
+    // -------------------------------------------------------------------------
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidEdid(edid) {
+      return edid is string && edid.size() == 9 && edid.matches('^EDID-[0-9]{4}$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isValidModuleList(arr) {
+      return arr is list
+        && arr.size() <= 10
+        && (arr.size() == 0 || (arr[0] is string && arr[0].size() >= 1 && arr[0].size() <= 40));
+    }
+
+    function isValidWeeklyActivity(arr) {
+      return arr is list
+        && arr.size() == 7
+        && arr[0] is int && arr[0] >= 0 && arr[0] <= 100000
+        && arr[1] is int && arr[1] >= 0 && arr[1] <= 100000
+        && arr[2] is int && arr[2] >= 0 && arr[2] <= 100000
+        && arr[3] is int && arr[3] >= 0 && arr[3] <= 100000
+        && arr[4] is int && arr[4] >= 0 && arr[4] <= 100000
+        && arr[5] is int && arr[5] >= 0 && arr[5] <= 100000
+        && arr[6] is int && arr[6] >= 0 && arr[6] <= 100000;
+    }
+
+    function isValidStudent(data, uid) {
+      return data.keys().hasAll([
+          'uid', 'edid', 'fullName', 'email', 'college', 'studentDetails',
+          'authProvider', 'visitedModules', 'completedModules',
+          'problemsSolved', 'scansCompleted', 'learningSeconds',
+          'weeklyActivity', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'edid', 'fullName', 'email', 'college', 'studentDetails',
+          'authProvider', 'visitedModules', 'completedModules',
+          'problemsSolved', 'scansCompleted', 'learningSeconds',
+          'weeklyActivity', 'createdAt', 'updatedAt'
+        ])
+        && data.uid == uid
+        && isValidId(data.uid)
+        && isValidEdid(data.edid)
+        && data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 80
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 160
+        && data.college is string && data.college.size() <= 120
+        && data.studentDetails is string && data.studentDetails.size() <= 120
+        && data.authProvider in ['password', 'google']
+        && isValidModuleList(data.visitedModules)
+        && isValidModuleList(data.completedModules)
+        && data.problemsSolved is int && data.problemsSolved >= 0 && data.problemsSolved <= 1000000
+        && data.scansCompleted is int && data.scansCompleted >= 0 && data.scansCompleted <= 1000000
+        && data.learningSeconds is int && data.learningSeconds >= 0 && data.learningSeconds <= 100000000
+        && isValidWeeklyActivity(data.weeklyActivity)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidEdidIndex(data, edid) {
+      return data.keys().hasAll([
+          'edid', 'ownerUid', 'authProvider', 'encryptedEmail', 'iv', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'edid', 'ownerUid', 'authProvider', 'encryptedEmail', 'iv', 'createdAt', 'updatedAt'
+        ])
+        && data.edid == edid
+        && isValidEdid(data.edid)
+        && isValidId(data.ownerUid)
+        && data.ownerUid == request.auth.uid
+        && data.authProvider in ['password', 'google']
+        && data.encryptedEmail is string && data.encryptedEmail.size() <= 512
+        && data.iv is string && data.iv.size() <= 64
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // -------------------------------------------------------------------------
+    // Students Collection (PII + Isolated Learning Progress)
+    // -------------------------------------------------------------------------
+    match /students/{uid} {
+      allow get: if isValidId(uid) && isOwner(uid);
+      allow list: if false;
+
+      allow create: if isValidId(uid)
+        && isOwner(uid)
+        && isVerifiedUser()
+        && isValidStudent(incoming(), uid)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && !exists(/databases/$(database)/documents/students/$(uid))
+        && getAfter(/databases/$(database)/documents/edid_index/$(incoming().edid)).data.ownerUid == uid;
+
+      allow update: if isValidId(uid)
+        && isOwner(uid)
+        && isVerifiedUser()
+        && isValidStudent(incoming(), uid)
+        && incoming().uid == existing().uid
+        && incoming().edid == existing().edid
+        && incoming().email == existing().email
+        && incoming().authProvider == existing().authProvider
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'fullName', 'college', 'studentDetails', 'updatedAt'
+          ])
+          || incoming().diff(existing()).affectedKeys().hasOnly([
+            'visitedModules', 'completedModules', 'problemsSolved',
+            'scansCompleted', 'learningSeconds', 'weeklyActivity', 'updatedAt'
+          ])
+        );
+
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // EDID Index Collection (Atomic Unique ID Lock + Zero Plaintext PII)
+    // -------------------------------------------------------------------------
+    match /edid_index/{edid} {
+      allow get: if isValidEdid(edid);
+      allow list: if false;
+
+      allow create: if isValidEdid(edid)
+        && isVerifiedUser()
+        && isValidEdidIndex(incoming(), edid)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && !exists(/databases/$(database)/documents/edid_index/$(edid))
+        && getAfter(/databases/$(database)/documents/students/$(request.auth.uid)).data.edid == edid;
+
+      allow update: if isValidEdid(edid)
+        && isVerifiedUser()
+        && existing().ownerUid == request.auth.uid
+        && isValidEdidIndex(incoming(), edid)
+        && incoming().edid == existing().edid
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().authProvider == existing().authProvider
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'encryptedEmail', 'iv', 'updatedAt'
+        ]);
+
+      allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Startup Connectivity Check Path (Empty, No PII)
+    // -------------------------------------------------------------------------
+    match /test/connection {
+      allow get: if true;
+      allow list, write: if false;
+    }
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "entities": {
+    "StudentProfile": {
+      "title": "StudentProfile",
+      "description": "Authenticated student profile, unique EDID-XXXX identifier, and isolated learning progress metrics.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Firebase Auth UID matching the document ID."
+        },
+        "edid": {
+          "type": "string",
+          "pattern": "^EDID-[0-9]{4}$",
+          "minLength": 9,
+          "maxLength": 9,
+          "description": "Globally unique 4-digit student identifier (e.g. EDID-3574)."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Student display name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 160,
+          "description": "Student registered email address (PII, owner-only readable)."
+        },
+        "college": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 120,
+          "description": "College or institution name."
+        },
+        "studentDetails": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 120,
+          "description": "Department, year, or roll number details."
+        },
+        "authProvider": {
+          "type": "string",
+          "enum": ["password", "google"],
+          "description": "Primary authentication provider used during registration."
+        },
+        "visitedModules": {
+          "type": "array",
+          "description": "List of visited module IDs (max 10)."
+        },
+        "completedModules": {
+          "type": "array",
+          "description": "List of completed module IDs (max 10)."
+        },
+        "problemsSolved": {
+          "type": "integer",
+          "description": "Total engineering drawing problems solved."
+        },
+        "scansCompleted": {
+          "type": "integer",
+          "description": "Total textbook question scans completed."
+        },
+        "learningSeconds": {
+          "type": "integer",
+          "description": "Total active study time in seconds."
+        },
+        "weeklyActivity": {
+          "type": "array",
+          "description": "Fixed 7-element array of daily solved counts (Mon-Sun)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "uid",
+        "edid",
+        "fullName",
+        "email",
+        "college",
+        "studentDetails",
+        "authProvider",
+        "visitedModules",
+        "completedModules",
+        "problemsSolved",
+        "scansCompleted",
+        "learningSeconds",
+        "weeklyActivity",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "EdidIndex": {
+      "title": "EdidIndex",
+      "description": "Unique EDID-XXXX reservation index preventing duplicate IDs and enabling password-encrypted email resolution without exposing PII.",
+      "type": "object",
+      "properties": {
+        "edid": {
+          "type": "string",
+          "pattern": "^EDID-[0-9]{4}$",
+          "minLength": 9,
+          "maxLength": 9,
+          "description": "Unique EDID-XXXX identifier matching document ID."
+        },
+        "ownerUid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID of the student who owns this EDID."
+        },
+        "authProvider": {
+          "type": "string",
+          "enum": ["password", "google"],
+          "description": "Authentication provider linked to this EDID."
+        },
+        "encryptedEmail": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 512,
+          "description": "AES-GCM encrypted email ciphertext (derived from user password + EDID salt) so no plaintext email is exposed."
+        },
+        "iv": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 64,
+          "description": "Base64 initialization vector for AES-GCM decryption."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "edid",
+        "ownerUid",
+        "authProvider",
+        "encryptedEmail",
+        "iv",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/students/{uid}": {
+      "schema": { "$ref": "#/entities/StudentProfile" },
+      "description": "Private per-student profile, EDID-XXXX assignment, and isolated learning progress."
+    },
+    "/edid_index/{edid}": {
+      "schema": { "$ref": "#/entities/EdidIndex" },
+      "description": "Atomic unique reservation registry for EDID-XXXX identifiers with zero plaintext PII."
+    }
+  }
+}
