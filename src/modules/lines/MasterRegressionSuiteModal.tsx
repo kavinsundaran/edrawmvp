@@ -37,6 +37,21 @@ interface MasterRegressionSuiteModalProps {
   isDark?: boolean;
 }
 
+const formatStatusLabel = (status: string) => {
+  switch (status) {
+    case 'VALID':
+      return 'Valid';
+    case 'INCONSISTENT_CONSTRAINTS':
+      return 'Inconsistent Constraints';
+    case 'UNDERDETERMINED':
+      return 'Underdetermined';
+    case 'UNCERTAIN_OCR':
+      return 'Needs Verification';
+    default:
+      return status;
+  }
+};
+
 export const MasterRegressionSuiteModal: React.FC<MasterRegressionSuiteModalProps> = ({
   isOpen,
   onClose,
@@ -149,12 +164,9 @@ export const MasterRegressionSuiteModal: React.FC<MasterRegressionSuiteModalProp
                 <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
                   Master Geometry Solver &amp; Regression Suite
                 </h3>
-                <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 rounded border border-emerald-200 dark:border-emerald-800">
-                  HEAD 1 - HEAD 4
-                </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                10 Master Tests • Constraint Normalization • Contradiction Detection • Deterministic Solver
+                10 Master Tests • Constraint Verification • Contradiction Detection • Deterministic Geometry
               </p>
             </div>
           </div>
@@ -256,8 +268,8 @@ export const MasterRegressionSuiteModal: React.FC<MasterRegressionSuiteModalProp
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
-                          <span className="font-mono text-indigo-600 dark:text-indigo-400">
-                            Expected: {test.expectedStatus}
+                          <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                            Expected: {formatStatusLabel(test.expectedStatus)}
                           </span>
                           <span>•</span>
                           <span>{test.expectedExplanation}</span>
@@ -270,7 +282,7 @@ export const MasterRegressionSuiteModal: React.FC<MasterRegressionSuiteModalProp
                             </span>
                             <span>•</span>
                             <span className={res.statusMatch ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 font-bold'}>
-                              Status: {res.model.validation_status} ({res.statusMatch ? 'MATCH' : 'MISMATCH'})
+                              Status: {formatStatusLabel(res.model.validation_status)} ({res.statusMatch ? 'Match' : 'Mismatch'})
                             </span>
                             {res.model.contradiction_explanation && (
                               <span className="text-amber-600 dark:text-amber-400 font-medium">
@@ -389,14 +401,14 @@ export const MasterRegressionSuiteModal: React.FC<MasterRegressionSuiteModalProp
                       <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
                         {customModel.categoryTitle}
                       </span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
                         customModel.validation_status === 'VALID'
                           ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                           : customModel.validation_status === 'INCONSISTENT_CONSTRAINTS'
                           ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
                           : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
                       }`}>
-                        {customModel.validation_status}
+                        {formatStatusLabel(customModel.validation_status)}
                       </span>
                     </div>
 
@@ -453,63 +465,63 @@ export const MasterRegressionSuiteModal: React.FC<MasterRegressionSuiteModalProp
             </div>
           )}
 
-          {/* TAB 3: Normalized Constraint Model Inspector */}
+          {/* TAB 3: Geometric Constraint Summary */}
           {activeTab === 'inspector' && selectedModel && (
             <div className="space-y-4 font-mono text-xs">
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
                 <div>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                    Normalized Constraint Model Specification (HEAD 2)
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 font-sans">
+                    Geometric Constraint Summary
                   </h4>
-                  <p className="text-[11px] text-slate-500">
-                    Internal normalized representation shared by Manual, OCR, and Clipboard pipelines.
+                  <p className="text-[11px] text-slate-500 font-sans">
+                    Extracted dimensions, endpoint coordinates, inclinations, and trace conditions.
                   </p>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
-                  {selectedModel.category}
+                <span className="px-2 py-0.5 rounded text-[10px] font-sans font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                  {selectedModel.categoryTitle}
                 </span>
               </div>
 
-              {/* Grid of normalized parameters */}
+              {/* Grid of geometric parameters */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
                   <span className="text-[10px] text-slate-400 font-sans uppercase font-bold">Line Entities</span>
                   <div>Name: <strong className="text-slate-800 dark:text-slate-200">{selectedModel.endpoint_A.name}{selectedModel.endpoint_B.name}</strong></div>
-                  <div>True Length: <strong className="text-slate-800 dark:text-slate-200">{selectedModel.true_length_mm ?? 'null'} mm</strong></div>
-                  <div>Input Mode: <strong className="text-slate-800 dark:text-slate-200">{selectedModel.input_mode}</strong></div>
+                  <div>True Length: <strong className="text-slate-800 dark:text-slate-200">{selectedModel.true_length_mm !== null ? `${selectedModel.true_length_mm} mm` : '—'}</strong></div>
+                  <div>Method: <strong className="text-slate-800 dark:text-slate-200">{selectedModel.construction_method}</strong></div>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
                   <span className="text-[10px] text-slate-400 font-sans uppercase font-bold">Endpoint A Coordinates</span>
-                  <div>Z (HP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.endpoint_A.distHp ?? 'null'} mm ({selectedModel.endpoint_A.hpRelation ?? 'null'})</strong></div>
-                  <div>Y (VP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.endpoint_A.distVp ?? 'null'} mm ({selectedModel.endpoint_A.vpRelation ?? 'null'})</strong></div>
+                  <div>Z (HP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.endpoint_A.distHp !== null ? `${selectedModel.endpoint_A.distHp} mm (${selectedModel.endpoint_A.hpRelation ?? '—'})` : '—'}</strong></div>
+                  <div>Y (VP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.endpoint_A.distVp !== null ? `${selectedModel.endpoint_A.distVp} mm (${selectedModel.endpoint_A.vpRelation ?? '—'})` : '—'}</strong></div>
                   <div>X: <strong className="text-slate-800 dark:text-slate-200">0 mm (reference)</strong></div>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
                   <span className="text-[10px] text-slate-400 font-sans uppercase font-bold">Endpoint B Coordinates</span>
-                  <div>Z (HP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.endpoint_B.distHp ?? 'null'} mm ({selectedModel.endpoint_B.hpRelation ?? 'null'})</strong></div>
-                  <div>Y (VP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.endpoint_B.distVp ?? 'null'} mm ({selectedModel.endpoint_B.vpRelation ?? 'null'})</strong></div>
-                  <div>DEP (dX): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.dep_projector_distance_mm ?? 'null'} mm</strong></div>
+                  <div>Z (HP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.endpoint_B.distHp !== null ? `${selectedModel.endpoint_B.distHp} mm (${selectedModel.endpoint_B.hpRelation ?? '—'})` : '—'}</strong></div>
+                  <div>Y (VP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.endpoint_B.distVp !== null ? `${selectedModel.endpoint_B.distVp} mm (${selectedModel.endpoint_B.vpRelation ?? '—'})` : '—'}</strong></div>
+                  <div>DEP (dX): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.dep_projector_distance_mm !== null ? `${selectedModel.dep_projector_distance_mm} mm` : '—'}</strong></div>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
                   <span className="text-[10px] text-slate-400 font-sans uppercase font-bold">Angles &amp; Inclinations</span>
-                  <div>θ (HP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.inclination_hp_deg ?? 'null'}°</strong></div>
-                  <div>φ (VP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.inclination_vp_deg ?? 'null'}°</strong></div>
-                  <div>α (Apparent FV): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.front_view_angle_deg ?? 'null'}°</strong></div>
-                  <div>β (Apparent TV): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.top_view_angle_deg ?? 'null'}°</strong></div>
+                  <div>θ (HP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.inclination_hp_deg !== null ? `${selectedModel.inclination_hp_deg}°` : '—'}</strong></div>
+                  <div>φ (VP): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.inclination_vp_deg !== null ? `${selectedModel.inclination_vp_deg}°` : '—'}</strong></div>
+                  <div>α (Apparent FV): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.front_view_angle_deg !== null ? `${selectedModel.front_view_angle_deg}°` : '—'}</strong></div>
+                  <div>β (Apparent TV): <strong className="text-slate-800 dark:text-slate-200">{selectedModel.top_view_angle_deg !== null ? `${selectedModel.top_view_angle_deg}°` : '—'}</strong></div>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
-                  <span className="text-[10px] text-slate-400 font-sans uppercase font-bold">Traces (SL-12 / TEST 8)</span>
+                  <span className="text-[10px] text-slate-400 font-sans uppercase font-bold">Traces (HT &amp; VT)</span>
                   <div>HT: <strong className="text-slate-800 dark:text-slate-200">{selectedModel.known_traces.ht?.exists ? (selectedModel.known_traces.ht.isFiniteSegment ? 'Finite Segment Pierces HP' : 'Infinite Extension Pierces HP') : 'No HT (Parallel to HP)'}</strong></div>
                   <div>VT: <strong className="text-slate-800 dark:text-slate-200">{selectedModel.known_traces.vt?.exists ? (selectedModel.known_traces.vt.isFiniteSegment ? 'Finite Segment Pierces VP' : 'Infinite Extension Pierces VP') : 'No VT (Parallel to VP)'}</strong></div>
                 </div>
 
                 <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
                   <span className="text-[10px] text-slate-400 font-sans uppercase font-bold">Degrees of Freedom &amp; Validation</span>
-                  <div>Status: <strong className="text-slate-800 dark:text-slate-200">{selectedModel.validation_status}</strong></div>
+                  <div>Status: <strong className="text-slate-800 dark:text-slate-200">{formatStatusLabel(selectedModel.validation_status)}</strong></div>
                   <div>Degrees of Freedom: <strong className="text-slate-800 dark:text-slate-200">{selectedModel.degrees_of_freedom}</strong></div>
                   <div>Valid Solutions: <strong className="text-slate-800 dark:text-slate-200">{selectedModel.solution_count}</strong></div>
                 </div>

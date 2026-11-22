@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { Moon, Sun } from 'lucide-react';
+import { CapybaraLogoImg, CapybaraWordmarkImg } from '../BrandAssets';
 
 interface AuthLayoutProps {
   isDark: boolean;
@@ -44,27 +45,14 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
 
           {/* Top Brand Lockup */}
           <div className="relative z-10 flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-sm flex items-center justify-center shrink-0">
-              <svg viewBox="0 0 40 40" className="w-7 h-7 text-white" fill="none" aria-hidden="true">
-                <path
-                  d="M9 10L20 5L31 10V24L20 30L9 24V10Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                  strokeOpacity="0.95"
-                />
-                <path
-                  d="M20 5V18M20 18L31 24M20 18L9 24"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeDasharray="2.5 2.5"
-                />
-                <circle cx="20" cy="18" r="3" fill="currentColor" />
-              </svg>
+            <div className="w-14 h-14 aspect-square rounded-xl bg-[#F6F5FA] border border-white/30 p-0.5 flex items-center justify-center shrink-0 shadow-xs">
+              <CapybaraLogoImg colorHex="#1D1D2B" />
             </div>
             <div>
-              <div className="text-xl font-bold tracking-wider leading-none">EDRAW</div>
+              <CapybaraWordmarkImg
+                colorHex="#FFFFFF"
+                className="h-10 sm:h-12 w-auto object-contain select-none"
+              />
               <div className="text-xs text-white/80 font-medium mt-1">
                 Interactive Engineering Graphics Studio
               </div>

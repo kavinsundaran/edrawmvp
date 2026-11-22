@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { PlaneColorPicker } from '../PlaneColorPicker';
 import { AppRoute } from '../../types/modules';
+import { CapybaraLogoImg, CapybaraWordmarkImg } from '../BrandAssets';
 import studentAvatarImg from '../../assets/images/edraw_student_avatar_1795028178386.jpg';
 
 interface AppHeaderProps {
@@ -109,14 +110,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       },
       {
         title: 'Question-to-Graphics Generator',
-        category: 'Parser Lab · Text & OCR Constructions',
+        category: 'Coming soon · Text & OCR Constructions',
         keywords: 'question generator parser ocr text problem solver rotating line',
         action: () => onNavigate('/question-generator'),
         icon: <FileText className="w-4 h-4 text-[#7138E8]" />,
       },
       {
         title: 'Scan Textbook Question',
-        category: 'OCR & Camera Input',
+        category: 'OCR & Camera Input · Coming soon',
         keywords: 'scan camera upload photo textbook ocr',
         action: () => onOpenScanModal(),
         icon: <FileText className="w-4 h-4 text-[#7138E8]" />,
@@ -150,7 +151,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     .map((p) => p[0].toUpperCase())
     .join('');
 
-  const moduleHeaderMeta = useMemo(() => {
+  const moduleHeaderMeta = useMemo((): {
+    title: string;
+    subtitle: string;
+    badge?: string;
+  } | null => {
     if (currentRoute === '/projection-of-points') {
       return {
         title: 'Projection of Points',
@@ -167,24 +172,45 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       return {
         title: 'Question-to-Graphics Generator',
         subtitle: 'Parse engineering word problems into orthographic projections',
+        badge: 'Coming soon',
       };
     }
     return null;
   }, [currentRoute]);
 
   return (
-    <header className="px-4 sm:px-6 py-3.5 border-b border-[#E8E2F5] dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900">
-      {/* Left: Mobile Drawer Button + Contextual Module Title OR Dashboard Welcome */}
-      <div className="flex items-center gap-3 min-w-0">
-        <button
-          type="button"
-          onClick={onOpenMobileSidebar}
-          className="lg:hidden w-9 h-9 rounded-xl bg-[#F1EBFF] dark:bg-slate-800 text-[#7138E8] dark:text-purple-300 flex items-center justify-center cursor-pointer shrink-0"
-          aria-label="Open navigation menu"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+    <header className="px-4 sm:px-6 py-3.5 border-b border-[#E8E2F5] dark:border-slate-800 flex flex-wrap items-start justify-between gap-4 bg-white dark:bg-slate-900">
+      {/* Top-Left: CAPYBARA Brand Row + Existing Controls Repositioned Directly Below */}
+      <div className="flex flex-col gap-3 min-w-0">
+        {/* Row 1: Extreme Top-Left Square Capybara Logo + CAPYBARA Wordmark */}
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={onOpenMobileSidebar}
+            className="lg:hidden w-9 h-9 rounded-xl bg-[#F1EBFF] dark:bg-slate-800 text-[#7138E8] dark:text-purple-300 flex items-center justify-center cursor-pointer shrink-0"
+            aria-label="Open navigation menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
 
+          <button
+            type="button"
+            onClick={() => onNavigate('/dashboard')}
+            title="CAPYBARA Home"
+            aria-label="CAPYBARA Home"
+            className="inline-flex items-center gap-3.5 group cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-[#7138E8] shrink-0"
+          >
+            <span className="w-12 h-12 sm:w-14 sm:h-14 aspect-square rounded-xl bg-[#F4F3F8] dark:bg-slate-800 border border-[#E5E0F3] dark:border-slate-700 p-0.5 flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-[1.02]">
+              <CapybaraLogoImg colorHex={isDark ? '#F8FAFC' : '#1D1D2B'} />
+            </span>
+            <CapybaraWordmarkImg
+              colorHex={isDark ? '#F8FAFC' : '#1D1D2B'}
+              className="h-10 sm:h-12 w-auto object-contain select-none"
+            />
+          </button>
+        </div>
+
+        {/* Row 2: Existing Top-Left Module / Welcome Controls */}
         {moduleHeaderMeta ? (
           <div className="flex items-center gap-3 min-w-0">
             <button
@@ -197,9 +223,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold text-[#202044] dark:text-slate-100 truncate leading-tight">
-                {moduleHeaderMeta.title}
-              </h1>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-base sm:text-lg font-bold text-[#202044] dark:text-slate-100 truncate leading-tight">
+                  {moduleHeaderMeta.title}
+                </h1>
+                {moduleHeaderMeta.badge && (
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shrink-0">
+                    {moduleHeaderMeta.badge}
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-[#77758F] dark:text-slate-400 truncate leading-tight mt-0.5">
                 {moduleHeaderMeta.subtitle}
               </p>
@@ -325,7 +358,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           {isNotificationsOpen && (
             <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-slate-900 border border-[#E8E2F5] dark:border-slate-800 shadow-xl p-4 z-50">
               <div className="text-xs font-bold text-[#202044] dark:text-slate-100 pb-2.5 border-b border-[#E8E2F5] dark:border-slate-800">
-                EDRAW Platform Notes
+                CAPYBARA Platform Notes
               </div>
               <div className="divide-y divide-[#F0ECF9] dark:divide-slate-800 mt-1">
                 <button
@@ -351,8 +384,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   }}
                   className="w-full py-2.5 text-left hover:bg-[#F8F7FC] dark:hover:bg-slate-800/60 rounded-lg px-2 transition-colors cursor-pointer"
                 >
-                  <div className="text-xs font-semibold text-[#202044] dark:text-slate-100">
-                    Question-to-Graphics Generator
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-[#202044] dark:text-slate-100">
+                      Question-to-Graphics Generator
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">
+                      Coming soon
+                    </span>
                   </div>
                   <div className="text-[11px] text-[#77758F] dark:text-slate-400 mt-0.5">
                     Parse textbook word problems into step-by-step orthographic views.

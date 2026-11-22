@@ -174,7 +174,6 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
   const [appliedNotification, setAppliedNotification] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
-  const [ocrEngine, setOcrEngine] = useState<string>('');
 
   // Camera state & graceful fallback
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -251,7 +250,6 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
         explanation: cand.orientationDesc,
       };
       setParsedResult(parsed);
-      setOcrEngine(source === 'SAMPLE' ? 'textbook-dataset' : 'master-geometry-solver');
     } else {
       setParsedResult(null);
     }
@@ -324,7 +322,6 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
         if (data.extractedSchema) {
           setExtractedSchema(data.extractedSchema);
         }
-        setOcrEngine(data.source || 'gemini-3.8-flash');
       } else {
         throw new Error(data.error || 'Failed to extract drawing values');
       }
@@ -519,16 +516,19 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
                   Engineering Graphics Problem Parser
                 </h3>
                 <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 rounded border border-indigo-200 dark:border-indigo-800">
                   First-Angle Orthographic
                 </span>
+                <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 rounded border border-amber-200 dark:border-amber-800">
+                  OCR · Coming soon
+                </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Accurately extract True Length, inclinations, and end positions without hallucinated defaults
+                Extract True Length, inclinations, and end positions directly from problem statements
               </p>
             </div>
           </div>
@@ -558,6 +558,9 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
           >
             <Upload className="w-3.5 h-3.5" />
             <span>Upload Photo</span>
+            <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">
+              Coming soon
+            </span>
           </button>
           <button
             onClick={() => {
@@ -572,6 +575,9 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
           >
             <Camera className="w-3.5 h-3.5" />
             <span>Live Camera</span>
+            <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300">
+              Coming soon
+            </span>
           </button>
           <button
             onClick={() => {
@@ -642,16 +648,11 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">
-                        OCR Problem Statement:
+                        Extracted Problem Statement:
                       </span>
-                      {ocrEngine && (
-                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                          {ocrEngine}
-                        </span>
-                      )}
                     </div>
                     <p className="font-mono text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed">
-                      {questionText || 'Analyzing image with Gemini 3.8 Flash...'}
+                      {questionText || 'Reading textbook problem image...'}
                     </p>
                   </div>
                 </div>
@@ -791,10 +792,10 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
               <Loader2 className="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" />
               <div>
                 <span className="font-bold text-blue-900 dark:text-blue-300 text-xs">
-                  Running Multimodal OCR &amp; First-Angle Geometric Parser...
+                  Reading Textbook Problem &amp; Extracting Geometry...
                 </span>
                 <p className="text-[11px] text-blue-700 dark:text-blue-400">
-                  Ignoring solution steps; extracting true length, angles, and plane constraints.
+                  Extracting true length, inclinations, and reference plane positions.
                 </p>
               </div>
             </div>
@@ -808,16 +809,16 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span className="font-bold text-emerald-900 dark:text-emerald-300 text-xs">
                     {normalizedModel?.categoryTitle
-                      ? `${normalizedModel.category.replace(/_/g, ' ')}: ${normalizedModel.categoryTitle}`
+                      ? normalizedModel.categoryTitle
                       : parsedResult.type === 'POINT'
                       ? `Point ${parsedResult.name}`
-                      : `Line ${parsedResult.nameA}${parsedResult.nameB} (${parsedResult.orientation || 'Standard'})`}
+                      : `Line ${parsedResult.nameA}${parsedResult.nameB}`}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {normalizedModel && (
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                      className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
                         normalizedModel.validation_status === 'VALID'
                           ? 'bg-emerald-200 text-emerald-900 dark:bg-emerald-900/80 dark:text-emerald-200'
                           : normalizedModel.validation_status === 'INCONSISTENT_CONSTRAINTS'
@@ -827,12 +828,15 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
                           : 'bg-purple-200 text-purple-900 dark:bg-purple-900/80 dark:text-purple-200'
                       }`}
                     >
-                      {normalizedModel.validation_status}
+                      {normalizedModel.validation_status === 'VALID'
+                        ? 'Valid'
+                        : normalizedModel.validation_status === 'INCONSISTENT_CONSTRAINTS'
+                        ? 'Inconsistent Constraints'
+                        : normalizedModel.validation_status === 'UNDERDETERMINED'
+                        ? 'Needs More Data'
+                        : 'Needs Verification'}
                     </span>
                   )}
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-300">
-                    {ocrEngine || 'master-solver'}
-                  </span>
                 </div>
               </div>
 
@@ -885,14 +889,14 @@ export const ScanQuestionModal: React.FC<ScanQuestionModalProps> = ({
                     <div className="p-2 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-emerald-100 dark:border-emerald-900/40">
                       <span className="text-[10px] text-slate-400 block">Start Point {parsedResult.nameA}</span>
                       <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                        {parsedResult.endA.distanceHp}mm {parsedResult.endA.hpRelation}, {parsedResult.endA.distanceVp}mm {parsedResult.endA.vpRelation}
+                        {parsedResult.endA.distanceHp}mm {parsedResult.endA.hpRelation === 'ON' ? 'on HP' : parsedResult.endA.hpRelation === 'BELOW' ? 'below HP' : 'above HP'}, {parsedResult.endA.distanceVp}mm {parsedResult.endA.vpRelation === 'ON' ? 'on VP' : parsedResult.endA.vpRelation === 'BEHIND' ? 'behind VP' : 'in front of VP'}
                       </span>
                     </div>
 
                     <div className="p-2 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-emerald-100 dark:border-emerald-900/40">
                       <span className="text-[10px] text-slate-400 block">End Point {parsedResult.nameB}</span>
                       <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
-                        {parsedResult.endB?.distanceHp}mm {parsedResult.endB?.hpRelation}, {parsedResult.endB?.distanceVp}mm {parsedResult.endB?.vpRelation}
+                        {parsedResult.endB?.distanceHp}mm {parsedResult.endB?.hpRelation === 'ON' ? 'on HP' : parsedResult.endB?.hpRelation === 'BELOW' ? 'below HP' : 'above HP'}, {parsedResult.endB?.distanceVp}mm {parsedResult.endB?.vpRelation === 'ON' ? 'on VP' : parsedResult.endB?.vpRelation === 'BEHIND' ? 'behind VP' : 'in front of VP'}
                       </span>
                     </div>
                   </div>

@@ -18,6 +18,7 @@ import {
   PanelLeftOpen,
 } from 'lucide-react';
 import { AppRoute } from '../../types/modules';
+import { CapybaraLogoImg, CapybaraWordmarkImg } from '../BrandAssets';
 
 export type SidebarSectionId =
   | 'dashboard'
@@ -52,6 +53,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const navItems: {
     id: SidebarSectionId;
     label: string;
+    badge?: string;
     icon: React.ReactNode;
     route?: AppRoute;
   }[] = [
@@ -76,6 +78,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     {
       id: 'generator',
       label: 'Question-to-Graphics Generator',
+      badge: 'Coming soon',
       icon: <Sparkles className="w-[18px] h-[18px] shrink-0" />,
       route: '/question-generator',
     },
@@ -158,75 +161,34 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 onSelectSection('dashboard', '/dashboard');
                 onCloseMobile();
               }}
-              title="EDRAW Home"
-              aria-label="EDRAW Home"
-              className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#9565F5] to-[#5722C9] border border-white/25 shadow-[0_12px_28px_-6px_rgba(32,12,78,0.45)] flex items-center justify-center transition-transform duration-150 hover:scale-[1.04] cursor-pointer"
+              title="CAPYBARA Home"
+              aria-label="CAPYBARA Home"
+              className="w-12 h-12 aspect-square rounded-xl bg-[#F6F5FA] border border-white/30 p-0.5 shadow-[0_12px_28px_-6px_rgba(32,12,78,0.4)] flex items-center justify-center transition-transform duration-150 hover:scale-[1.04] cursor-pointer"
             >
-              <svg
-                viewBox="0 0 40 40"
-                className="w-6 h-6 text-white"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M9 10L20 5L31 10V24L20 30L9 24V10Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                  strokeOpacity="0.95"
-                />
-                <path
-                  d="M20 5V18M20 18L31 24M20 18L9 24"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeDasharray="2.5 2.5"
-                />
-                <circle cx="20" cy="18" r="3" fill="currentColor" />
-              </svg>
+              <CapybaraLogoImg colorHex="#1D1D2B" />
             </button>
           </div>
         ) : (
-          <div className="relative flex items-center justify-between lg:justify-center pt-2 pb-5">
+          <div className="relative flex items-center justify-between pt-1 pb-5 pr-8">
             <button
               type="button"
               onClick={() => {
                 onSelectSection('dashboard', '/dashboard');
                 onCloseMobile();
               }}
-              className="flex flex-col items-center gap-2.5 group cursor-pointer focus-visible:outline-2 focus-visible:outline-white rounded-2xl px-2"
+              className="flex flex-col items-start gap-2 group cursor-pointer focus-visible:outline-2 focus-visible:outline-white rounded-xl min-w-0"
             >
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#9565F5] to-[#5722C9] border border-white/25 shadow-[0_12px_28px_-6px_rgba(32,12,78,0.45)] flex items-center justify-center transition-transform duration-150 group-hover:scale-[1.03]">
-                <svg
-                  viewBox="0 0 40 40"
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M9 10L20 5L31 10V24L20 30L9 24V10Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                    strokeOpacity="0.95"
-                  />
-                  <path
-                    d="M20 5V18M20 18L31 24M20 18L9 24"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeDasharray="2.5 2.5"
-                  />
-                  <circle cx="20" cy="18" r="3" fill="currentColor" />
-                </svg>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-11 h-11 aspect-square rounded-xl bg-[#F6F5FA] border border-white/30 p-0.5 shadow-[0_10px_24px_-6px_rgba(32,12,78,0.4)] flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-[1.03]">
+                  <CapybaraLogoImg colorHex="#1D1D2B" />
+                </div>
+                <CapybaraWordmarkImg
+                  colorHex="#FFFFFF"
+                  className="h-8 sm:h-9 max-w-[136px] w-auto object-contain object-left select-none"
+                />
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold tracking-wider text-white leading-none">
-                  EDRAW
-                </div>
-                <div className="text-[11px] text-white/80 font-medium mt-1 leading-tight">
-                  Engineering Graphics
-                </div>
+              <div className="text-[11px] text-white/75 font-medium leading-tight pl-0.5">
+                Engineering Graphics
               </div>
             </button>
 
@@ -236,7 +198,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 onClick={onToggleCollapse}
                 title="Minimize sidebar"
                 aria-label="Minimize sidebar"
-                className="hidden lg:flex absolute top-0 right-0 w-8 h-8 rounded-xl bg-white/12 hover:bg-white/24 text-white/90 hover:text-white items-center justify-center transition-colors cursor-pointer"
+                className="hidden lg:flex absolute top-1 right-0 w-8 h-8 rounded-xl bg-white/12 hover:bg-white/24 text-white/90 hover:text-white items-center justify-center transition-colors cursor-pointer"
               >
                 <PanelLeftClose className="w-4 h-4" />
               </button>
@@ -245,7 +207,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <button
               type="button"
               onClick={onCloseMobile}
-              className="lg:hidden p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white cursor-pointer"
+              className="lg:hidden absolute top-1 right-0 p-2 rounded-xl bg-white/15 hover:bg-white/25 text-white cursor-pointer"
               aria-label="Close navigation menu"
             >
               <X className="w-4 h-4" />
@@ -262,7 +224,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 key={item.id}
                 type="button"
                 onClick={() => handleItemClick(item)}
-                title={collapsed ? item.label : undefined}
+                title={collapsed ? (item.badge ? `${item.label} (${item.badge})` : item.label) : undefined}
                 aria-label={item.label}
                 className={`relative w-full flex items-center transition-all duration-150 cursor-pointer rounded-xl ${
                   collapsed
@@ -283,7 +245,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 <span className={isActive ? 'text-white' : 'text-white/80'}>
                   {item.icon}
                 </span>
-                {!collapsed && <span className="leading-tight">{item.label}</span>}
+                {!collapsed && (
+                  <div className="min-w-0 flex flex-col items-start gap-0.5">
+                    <span className="leading-tight">{item.label}</span>
+                    {item.badge && (
+                      <span className="inline-block px-1.5 py-0.2 rounded text-[9px] font-semibold bg-amber-300/25 text-amber-100 border border-amber-200/35 leading-tight">
+                        {item.badge}
+                      </span>
+                    )}
+                  </div>
+                )}
               </button>
             );
           })}
@@ -312,7 +283,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             Quick Problem Scan
           </div>
           <p className="text-[11px] text-white/75 text-center mt-0.5 font-mono">
-            BIS SP 46 · 1st Angle
+            OCR · Coming soon
           </p>
 
           <button

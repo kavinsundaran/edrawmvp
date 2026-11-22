@@ -376,9 +376,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {/* Title & Progress Ring */}
               <div className="mt-4 flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-[15px] font-bold text-[#202033] dark:text-slate-100 leading-snug">
-                    Question-to-Graphics Generator
-                  </h2>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-[15px] font-bold text-[#202033] dark:text-slate-100 leading-snug">
+                      Question-to-Graphics Generator
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/70">
+                      Coming soon
+                    </span>
+                  </div>
                   <p className="text-xs text-[#77758A] dark:text-slate-400 mt-1.5 leading-relaxed">
                     Transform textbook problems into validated geometric constraints and step-by-step drawings.
                   </p>
@@ -387,7 +392,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
 
               <div className="mt-3 flex items-center gap-3 text-[11px] font-medium text-[#77758A] dark:text-slate-400">
-                <span>Text &amp; OCR Parser</span>
+                <span>OCR Scanner · Coming soon</span>
                 <span aria-hidden="true">·</span>
                 <span>Step Replay</span>
               </div>
