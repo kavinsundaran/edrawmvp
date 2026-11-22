@@ -109,7 +109,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
           Student Sign In
         </h2>
         <p className="text-sm text-[#77758F] dark:text-slate-400 mt-1.5 leading-relaxed">
-          Sign in with your registered email address or eDraw ID to open your dashboard.
+          Sign in with your registered email address or CAPYID to open your dashboard.
         </p>
       </div>
 
@@ -141,7 +141,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
               htmlFor="signin-identifier"
               className="text-xs font-semibold text-[#202044] dark:text-slate-200"
             >
-              Registered Email or eDraw ID
+              Registered Email or CAPYID
             </label>
             {detectedEdid && (
               <span className="text-[11px] font-mono font-semibold text-[#7138E8] dark:text-purple-300 tabular-nums">
@@ -157,13 +157,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
               autoComplete="username"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="student@college.edu or EDID-1000"
+              placeholder="student@college.edu or CAPYID-1000"
               className="w-full h-11 pl-10 pr-4 rounded-xl bg-[#F8F7FC] dark:bg-slate-950 border border-[#E5DFF5] dark:border-slate-700 text-sm text-[#202044] dark:text-slate-100 placeholder:text-[#9693AA] dark:placeholder:text-slate-500 focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:border-[#7138E8] focus:ring-2 focus:ring-[#7138E8]/20 transition-all"
               required
             />
           </div>
           <p className="text-[11px] text-[#77758F] dark:text-slate-400 mt-1.5">
-            Enter your registered email address or EDID-XXXX
+            Enter your registered email address or CAPYID-XXXX
           </p>
         </div>
 
@@ -252,7 +252,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
       {/* Register Link */}
       <div className="mt-6 pt-5 border-t border-[#F0ECF9] dark:border-slate-800 text-center space-y-1.5">
         <p className="text-xs text-[#77758F] dark:text-slate-400">
-          New to EDraw and need an eDraw ID?
+          New to Capybara and need a CAPYID?
         </p>
         <button
           type="button"

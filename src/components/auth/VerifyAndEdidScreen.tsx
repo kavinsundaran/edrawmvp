@@ -81,7 +81,7 @@ export const VerifyEmailCard: React.FC = () => {
           </span>
           . Verify your email once to generate your unique{' '}
           <span className="font-mono font-semibold text-[#7138E8] dark:text-purple-300">
-            EDID-XXXX
+            CAPYID-XXXX
           </span>{' '}
           identifier.
         </p>
@@ -117,11 +117,11 @@ export const VerifyEmailCard: React.FC = () => {
           {isChecking ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Verifying &amp; Generating EDID...</span>
+              <span>Verifying &amp; Generating CAPYID...</span>
             </>
           ) : (
             <>
-              <span>I&apos;ve Verified My Email — Get eDraw ID</span>
+              <span>I&apos;ve Verified My Email — Get CAPYID</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
@@ -204,7 +204,7 @@ export const IssuedEdidWelcomeCard: React.FC = () => {
 
       <div>
         <h2 className="text-2xl font-bold text-[#202044] dark:text-slate-100 tracking-tight">
-          Your eDraw ID is Ready
+          Your CAPYID is Ready
         </h2>
         <p className="text-sm text-[#77758F] dark:text-slate-400 mt-1.5 leading-relaxed">
           Save this unique student identifier. You can sign in anytime using either{' '}
@@ -223,7 +223,7 @@ export const IssuedEdidWelcomeCard: React.FC = () => {
       <div className="rounded-2xl bg-[#F8F7FC] dark:bg-slate-950 border border-[#E5DFF5] dark:border-slate-800 p-4 flex items-center justify-between gap-3">
         <div>
           <div className="text-[11px] font-medium text-[#77758F] dark:text-slate-400">
-            Unique Student eDraw ID
+            Unique Student CAPYID
           </div>
           <div className="text-2xl font-bold font-mono tabular-nums text-[#7138E8] dark:text-purple-300 mt-0.5">
             {newlyIssuedProfile.edid}

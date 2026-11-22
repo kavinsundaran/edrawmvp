@@ -2,7 +2,7 @@
   "entities": {
     "StudentProfile": {
       "title": "StudentProfile",
-      "description": "Authenticated student profile, unique EDID-XXXX identifier, and isolated learning progress metrics.",
+      "description": "Authenticated student profile, unique CAPYID-XXXX identifier, and isolated learning progress metrics.",
       "type": "object",
       "properties": {
         "uid": {
@@ -14,10 +14,10 @@
         },
         "edid": {
           "type": "string",
-          "pattern": "^EDID-[0-9]{4}$",
+          "pattern": "^(CAPYID|EDID)-[0-9]{4}$",
           "minLength": 9,
-          "maxLength": 9,
-          "description": "Globally unique 4-digit student identifier (e.g. EDID-3574)."
+          "maxLength": 11,
+          "description": "Globally unique 4-digit student identifier (e.g. CAPYID-3574)."
         },
         "fullName": {
           "type": "string",
@@ -104,33 +104,33 @@
     },
     "EdidIndex": {
       "title": "EdidIndex",
-      "description": "Unique EDID-XXXX reservation index preventing duplicate IDs and enabling password-encrypted email resolution without exposing PII.",
+      "description": "Unique CAPYID-XXXX reservation index preventing duplicate IDs and enabling password-encrypted email resolution without exposing PII.",
       "type": "object",
       "properties": {
         "edid": {
           "type": "string",
-          "pattern": "^EDID-[0-9]{4}$",
+          "pattern": "^(CAPYID|EDID)-[0-9]{4}$",
           "minLength": 9,
-          "maxLength": 9,
-          "description": "Unique EDID-XXXX identifier matching document ID."
+          "maxLength": 11,
+          "description": "Unique CAPYID-XXXX identifier matching document ID."
         },
         "ownerUid": {
           "type": "string",
           "pattern": "^[a-zA-Z0-9_\\-]+$",
           "minLength": 1,
           "maxLength": 128,
-          "description": "UID of the student who owns this EDID."
+          "description": "UID of the student who owns this CAPYID."
         },
         "authProvider": {
           "type": "string",
           "enum": ["password", "google"],
-          "description": "Authentication provider linked to this EDID."
+          "description": "Authentication provider linked to this CAPYID."
         },
         "encryptedEmail": {
           "type": "string",
           "minLength": 0,
           "maxLength": 512,
-          "description": "AES-GCM encrypted email ciphertext (derived from user password + EDID salt) so no plaintext email is exposed."
+          "description": "AES-GCM encrypted email ciphertext (derived from user password + CAPYID salt) so no plaintext email is exposed."
         },
         "iv": {
           "type": "string",
@@ -163,11 +163,11 @@
   "firestore": {
     "/students/{uid}": {
       "schema": { "$ref": "#/entities/StudentProfile" },
-      "description": "Private per-student profile, EDID-XXXX assignment, and isolated learning progress."
+      "description": "Private per-student profile, CAPYID-XXXX assignment, and isolated learning progress."
     },
     "/edid_index/{edid}": {
       "schema": { "$ref": "#/entities/EdidIndex" },
-      "description": "Atomic unique reservation registry for EDID-XXXX identifiers with zero plaintext PII."
+      "description": "Atomic unique reservation registry for CAPYID-XXXX identifiers with zero plaintext PII."
     }
   }
 }

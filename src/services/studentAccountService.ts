@@ -61,23 +61,23 @@ export function clearPendingRegistration(uid: string): void {
 }
 
 /**
- * Normalizes user input such as "edid-3574" or "EDID-3574" into "EDID-3574".
- * Returns null if input is not an EDID pattern (e.g. an email address).
+ * Normalizes user input such as "capyid-3574" or "CAPYID-3574" (and legacy EDID-XXXX)
+ * into uppercase format. Returns null if input is not an ID pattern (e.g. an email address).
  */
 export function normalizeEdidInput(raw: string): string | null {
   const trimmed = raw.trim().toUpperCase();
-  const match = trimmed.match(/^EDID-(\d{4})$/);
-  return match ? `EDID-${match[1]}` : null;
+  const match = trimmed.match(/^(CAPYID|EDID)-(\d{4})$/);
+  return match ? `${match[1]}-${match[2]}` : null;
 }
 
 /**
- * Generates a cryptographically uniform 4-digit EDID-XXXX (1000..9999).
+ * Generates a cryptographically uniform 4-digit CAPYID-XXXX (1000..9999).
  */
 export function generateRandomEdid(): string {
   const arr = new Uint32Array(1);
   window.crypto.getRandomValues(arr);
   const num = 1000 + (arr[0] % 9000);
-  return `EDID-${num}`;
+  return `CAPYID-${num}`;
 }
 
 function mapDocToStudentProfile(data: Record<string, any>): StudentProfile {
@@ -163,7 +163,7 @@ export async function ensureStudentAccountInFirestore(params: {
       }
 
       if (!chosenEdid) {
-        throw new Error('Unable to allocate a unique EDID-XXXX right now. Please try again.');
+        throw new Error('Unable to allocate a unique CAPYID-XXXX right now. Please try again.');
       }
 
       let encryptedEmail = '';
@@ -248,7 +248,7 @@ export async function resolveEmailForEdidSignIn(
   }
 
   if (!snap.exists()) {
-    throw new Error(`No registered student found with ${edid}. Please verify your eDraw ID.`);
+    throw new Error(`No registered student found with ${edid}. Please verify your CAPYID.`);
   }
 
   const data = snap.data();
@@ -272,7 +272,7 @@ export async function resolveEmailForEdidSignIn(
   );
 
   if (!decrypted) {
-    throw new Error('Invalid eDraw ID or password.');
+    throw new Error('Invalid CAPYID or password.');
   }
 
   return decrypted;

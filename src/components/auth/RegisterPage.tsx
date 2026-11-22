@@ -102,7 +102,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) =
         <p className="text-sm text-[#77758F] dark:text-slate-400 mt-1.5 leading-relaxed">
           Register your email once to save your account immediately and receive your unique{' '}
           <span className="font-semibold text-[#7138E8] dark:text-purple-300 font-mono">
-            EDID-XXXX
+            CAPYID-XXXX
           </span>{' '}
           student identifier.
         </p>
@@ -285,7 +285,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) =
             </>
           ) : (
             <>
-              <span>Register &amp; Get eDraw ID</span>
+              <span>Register &amp; Get CAPYID</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
@@ -317,7 +317,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) =
       {/* Sign In Switch */}
       <div className="mt-5 pt-4 border-t border-[#F0ECF9] dark:border-slate-800 text-center">
         <span className="text-xs text-[#77758F] dark:text-slate-400">
-          Already have an eDraw ID?{' '}
+          Already have a CAPYID?{' '}
         </span>
         <button
           type="button"

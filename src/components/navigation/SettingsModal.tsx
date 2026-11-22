@@ -344,7 +344,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   Student Session
                 </div>
                 <p className="text-xs text-[#77758A] dark:text-slate-400">
-                  Sign out to switch accounts or sign in with another EDID
+                  Sign out to switch accounts or sign in with another CAPYID
                 </p>
               </div>
               <button

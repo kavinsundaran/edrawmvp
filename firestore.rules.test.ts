@@ -4,7 +4,7 @@
  */
 
 /**
- * Security Rules Verification Spec for EDraw Student Accounts & EDID-XXXX Registry.
+ * Security Rules Verification Spec for Capybara Student Accounts & CAPYID-XXXX Registry.
  * Matches the "Dirty Dozen" adversarial payloads defined in security_spec.md.
  */
 
@@ -29,7 +29,7 @@ export const DIRTY_DOZEN_SECURITY_CASES = [
   },
   {
     id: 4,
-    name: 'Collection Enumeration (EDIDs)',
+    name: 'Collection Enumeration (CAPYIDs)',
     operation: 'LIST /edid_index',
     expected: 'PERMISSION_DENIED',
   },
@@ -47,26 +47,26 @@ export const DIRTY_DOZEN_SECURITY_CASES = [
   },
   {
     id: 7,
-    name: 'EDID Hijack / Overwrite',
-    operation: 'CREATE /edid_index/EDID-3574 (already exists)',
+    name: 'CAPYID Hijack / Overwrite',
+    operation: 'CREATE /edid_index/CAPYID-3574 (already exists)',
     expected: 'PERMISSION_DENIED',
   },
   {
     id: 8,
-    name: 'Orphaned Student Without EDID Index',
+    name: 'Orphaned Student Without CAPYID Index',
     operation: 'CREATE /students/userA (without batched /edid_index write)',
     expected: 'PERMISSION_DENIED',
   },
   {
     id: 9,
-    name: 'EDID Mutation Attack',
-    operation: 'UPDATE /students/userA (edid: EDID-1015)',
+    name: 'CAPYID Mutation Attack',
+    operation: 'UPDATE /students/userA (edid: CAPYID-1015)',
     expected: 'PERMISSION_DENIED',
   },
   {
     id: 10,
     name: 'Identity Spoofing on Create',
-    operation: 'CREATE /edid_index/EDID-9999 (ownerUid: userB, auth: userA)',
+    operation: 'CREATE /edid_index/CAPYID-9999 (ownerUid: userB, auth: userA)',
     expected: 'PERMISSION_DENIED',
   },
   {

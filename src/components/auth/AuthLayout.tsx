@@ -198,7 +198,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({
 
           {/* Quiet Footer Note */}
           <div className="relative z-10 text-xs text-white/70 font-mono">
-            First-Angle Orthographic Standard · Unique EDID-XXXX Student Access
+            First-Angle Orthographic Standard · Unique CAPYID-XXXX Student Access
           </div>
         </div>
       </div>

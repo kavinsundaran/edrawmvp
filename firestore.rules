@@ -15,8 +15,12 @@ service cloud.firestore {
       return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
+    function isValidCapyId(edid) {
+      return edid is string && edid.size() == 11 && edid.matches('^CAPYID-[0-9]{4}$');
+    }
+
     function isValidEdid(edid) {
-      return edid is string && edid.size() == 9 && edid.matches('^EDID-[0-9]{4}$');
+      return isValidCapyId(edid) || (edid is string && edid.size() == 9 && edid.matches('^EDID-[0-9]{4}$'));
     }
 
     function incoming() {
@@ -116,6 +120,7 @@ service cloud.firestore {
       allow create: if isValidId(uid)
         && isOwner(uid)
         && isVerifiedUser()
+        && isValidCapyId(incoming().edid)
         && isValidStudent(incoming(), uid)
         && incoming().createdAt == request.time
         && incoming().updatedAt == request.time
@@ -146,13 +151,13 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
-    // EDID Index Collection (Atomic Unique ID Lock + Zero Plaintext PII)
+    // CAPYID Index Collection (Atomic Unique ID Lock + Zero Plaintext PII)
     // -------------------------------------------------------------------------
     match /edid_index/{edid} {
       allow get: if isValidEdid(edid);
       allow list: if false;
 
-      allow create: if isValidEdid(edid)
+      allow create: if isValidCapyId(edid)
         && isVerifiedUser()
         && isValidEdidIndex(incoming(), edid)
         && incoming().createdAt == request.time

@@ -67,17 +67,17 @@ export function formatFirebaseAuthError(err: unknown): string {
     return 'Email/Password sign-in is not enabled in Firebase Console yet. Enable Email/Password under Authentication → Sign-in method, or use Continue with Google.';
   }
   if (code === 'auth/email-already-in-use') {
-    return 'An account with this email already exists. Please sign in with your email or EDID-XXXX.';
+    return 'An account with this email already exists. Please sign in with your email or CAPYID-XXXX.';
   }
   if (
     code === 'auth/invalid-credential' ||
     code === 'auth/wrong-password' ||
     code === 'auth/user-not-found'
   ) {
-    return 'Invalid email, eDraw ID, or password. If you registered with Google, click "Continue with Google" below.';
+    return 'Invalid email, CAPYID, or password. If you registered with Google, click "Continue with Google" below.';
   }
   if (code === 'auth/invalid-email') {
-    return 'Please enter a valid email address or EDID-XXXX.';
+    return 'Please enter a valid email address or CAPYID-XXXX.';
   }
   if (code === 'auth/weak-password') {
     return 'Password is too weak. Use at least 8 characters with letters and numbers.';
@@ -190,7 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithEmailOrEdid = useCallback(async (identifier: string, password: string) => {
     const trimmed = identifier.trim();
     if (!trimmed) {
-      throw new Error('Please enter your registered email address or eDraw ID.');
+      throw new Error('Please enter your registered email address or CAPYID.');
     }
     if (!password) {
       throw new Error('Please enter your password.');
@@ -201,7 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (edid) {
       emailToUse = await resolveEmailForEdidSignIn(edid, password);
     } else if (!trimmed.includes('@')) {
-      throw new Error('Enter a valid email address or an eDraw ID formatted as EDID-XXXX.');
+      throw new Error('Enter a valid email address or a CAPYID formatted as CAPYID-XXXX.');
     }
 
     pendingPasswordRef.current = password;

@@ -328,7 +328,7 @@ const AppShell: React.FC = () => {
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-[#7138E8] animate-pulse" />
           <p className="text-sm font-medium text-[#77758F] dark:text-slate-400">
-            Loading EDraw Studio...
+            Loading Capybara...
           </p>
         </div>
       </div>
@@ -468,7 +468,7 @@ const AppShell: React.FC = () => {
               <div className="flex flex-col sm:flex-row items-center justify-between gap-2 font-mono text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-[#202033] dark:text-slate-200">
-                    EDraw Engineering Graphics
+                    Capybara Engineering Graphics
                   </span>
                   <span>·</span>
                   <span>{studentProfile.edid}</span>
