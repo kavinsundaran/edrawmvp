@@ -10,6 +10,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   sendEmailVerification,
   updateProfile,
   signOut,
@@ -42,6 +44,8 @@ interface AuthContextValue {
   isAuthReady: boolean;
   needsEmailVerification: boolean;
   newlyIssuedProfile: StudentProfile | null;
+  redirectError: string | null;
+  clearRedirectError: () => void;
   dismissNewlyIssuedProfile: () => void;
   signInWithEmailOrEdid: (identifier: string, password: string) => Promise<void>;
   registerWithEmail: (payload: RegisterPayload) => Promise<void>;
@@ -58,13 +62,29 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const GOOGLE_REDIRECT_DETAILS_KEY = 'capybara_google_redirect_details';
+
+function isTopLevelWindow(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.self === window.top;
+  } catch {
+    return false;
+  }
+}
 
 export function formatFirebaseAuthError(err: unknown): string {
   const code = (err as any)?.code || '';
   const msg = err instanceof Error ? err.message : String(err || '');
 
+  if (code === 'auth/unauthorized-domain' || msg.includes('auth/unauthorized-domain')) {
+    const host =
+      typeof window !== 'undefined' && window.location?.hostname
+        ? window.location.hostname
+        : 'this domain';
+    return `Domain "${host}" is not authorized for Google Sign-In yet. Add "${host}" in Firebase Console → Authentication → Settings → Authorized domains, then refresh and try again.`;
+  }
   if (code === 'auth/operation-not-allowed' || msg.includes('operation-not-allowed')) {
-    return 'Email/Password sign-in is not enabled in Firebase Console yet. Enable Email/Password under Authentication → Sign-in method, or use Continue with Google.';
+    return 'This sign-in provider is not enabled in Firebase Console yet. Enable it under Authentication → Sign-in method.';
   }
   if (code === 'auth/email-already-in-use') {
     return 'An account with this email already exists. Please sign in with your email or CAPYID-XXXX.';
@@ -76,6 +96,9 @@ export function formatFirebaseAuthError(err: unknown): string {
   ) {
     return 'Invalid email, CAPYID, or password. If you registered with Google, click "Continue with Google" below.';
   }
+  if (code === 'auth/account-exists-with-different-credential') {
+    return 'An account with this email already exists using a different sign-in method. Please sign in with your email and password.';
+  }
   if (code === 'auth/invalid-email') {
     return 'Please enter a valid email address or CAPYID-XXXX.';
   }
@@ -85,8 +108,17 @@ export function formatFirebaseAuthError(err: unknown): string {
   if (code === 'auth/popup-closed-by-user') {
     return 'Google sign-in popup was closed before completing.';
   }
+  if (code === 'auth/cancelled-popup-request') {
+    return 'Previous Google sign-in window was cancelled. Please click "Continue with Google" once more.';
+  }
   if (code === 'auth/popup-blocked') {
-    return 'Sign-in popup was blocked by your browser. Please allow popups and try again.';
+    return 'Sign-in popup was blocked by your browser. Please allow popups for this site and try again.';
+  }
+  if (code === 'auth/operation-not-supported-in-this-environment') {
+    return 'Google popup sign-in is not supported in this browser environment. Try opening the site directly in Chrome, Safari, or Edge.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Network error while contacting Google/Firebase Authentication. Check your connection or disable strict tracking blockers and retry.';
   }
   if (code === 'auth/too-many-requests') {
     return 'Too many attempts detected. Please wait a moment and try again.';
@@ -103,55 +135,101 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
   const [needsEmailVerification, setNeedsEmailVerification] = useState<boolean>(false);
   const [newlyIssuedProfile, setNewlyIssuedProfile] = useState<StudentProfile | null>(null);
+  const [redirectError, setRedirectError] = useState<string | null>(null);
 
   const pendingPasswordRef = useRef<string | null>(null);
   const pendingGoogleDetailsRef = useRef<Partial<PendingRegistrationDetails> | null>(null);
   const isRegisteringRef = useRef<boolean>(false);
+  const hydrationInFlightRef = useRef<{ uid: string; promise: Promise<void> } | null>(null);
 
   const hydrateVerifiedUser = useCallback(async (user: User) => {
-    const existing = await fetchStudentProfile(user.uid);
-    if (existing) {
-      if (pendingPasswordRef.current && user.email) {
-        await syncEdidEncryptedEmail(existing.edid, user.email, pendingPasswordRef.current).catch(
-          () => {}
-        );
-        pendingPasswordRef.current = null;
-      }
-      setStudentProfile(existing);
-      setNeedsEmailVerification(false);
-      return;
+    if (hydrationInFlightRef.current?.uid === user.uid) {
+      return hydrationInFlightRef.current.promise;
     }
 
-    const savedPending = loadPendingRegistration(user.uid);
-    const googlePending = pendingGoogleDetailsRef.current;
-    pendingGoogleDetailsRef.current = null;
+    const promise = (async () => {
+      const existing = await fetchStudentProfile(user.uid);
+      if (existing) {
+        if (pendingPasswordRef.current && user.email) {
+          await syncEdidEncryptedEmail(existing.edid, user.email, pendingPasswordRef.current).catch(
+            () => {}
+          );
+          pendingPasswordRef.current = null;
+        }
+        setStudentProfile(existing);
+        setNeedsEmailVerification(false);
+        return;
+      }
 
-    const isGoogle = user.providerData.some((p) => p.providerId === 'google.com');
-    const fallbackName =
-      savedPending?.fullName ||
-      googlePending?.fullName ||
-      user.displayName ||
-      (user.email ? user.email.split('@')[0] : 'Student');
+      const savedPending = loadPendingRegistration(user.uid);
+      let googlePending = pendingGoogleDetailsRef.current;
+      pendingGoogleDetailsRef.current = null;
 
-    const { profile, isNewlyAssigned } = await ensureStudentAccountInFirestore({
-      uid: user.uid,
-      email: user.email || '',
-      fullName: fallbackName,
-      college: savedPending?.college || googlePending?.college || '',
-      studentDetails: savedPending?.studentDetails || googlePending?.studentDetails || '',
-      authProvider: isGoogle ? 'google' : 'password',
-      passwordForEdidLock: pendingPasswordRef.current || undefined,
-    });
+      if (!googlePending) {
+        try {
+          const rawRedirectDetails = sessionStorage.getItem(GOOGLE_REDIRECT_DETAILS_KEY);
+          if (rawRedirectDetails) {
+            googlePending = JSON.parse(rawRedirectDetails) as Partial<PendingRegistrationDetails>;
+            sessionStorage.removeItem(GOOGLE_REDIRECT_DETAILS_KEY);
+          }
+        } catch {}
+      }
 
-    pendingPasswordRef.current = null;
-    setStudentProfile(profile);
-    setNeedsEmailVerification(false);
-    if (isNewlyAssigned) {
-      setNewlyIssuedProfile(profile);
+      const isGoogle = user.providerData.some((p) => p.providerId === 'google.com');
+      const fallbackName =
+        savedPending?.fullName ||
+        googlePending?.fullName ||
+        user.displayName ||
+        (user.email ? user.email.split('@')[0] : 'Student');
+
+      const { profile, isNewlyAssigned } = await ensureStudentAccountInFirestore({
+        uid: user.uid,
+        email: user.email || '',
+        fullName: fallbackName,
+        college: savedPending?.college || googlePending?.college || '',
+        studentDetails: savedPending?.studentDetails || googlePending?.studentDetails || '',
+        authProvider: isGoogle ? 'google' : 'password',
+        passwordForEdidLock: pendingPasswordRef.current || undefined,
+      });
+
+      pendingPasswordRef.current = null;
+      setStudentProfile(profile);
+      setNeedsEmailVerification(false);
+      if (isNewlyAssigned) {
+        setNewlyIssuedProfile(profile);
+      }
+    })();
+
+    hydrationInFlightRef.current = { uid: user.uid, promise };
+    try {
+      await promise;
+    } finally {
+      if (hydrationInFlightRef.current?.promise === promise) {
+        hydrationInFlightRef.current = null;
+      }
     }
   }, []);
 
   useEffect(() => {
+    let active = true;
+
+    // Handle redirect completion (used as fallback when popups are blocked on Netlify/mobile)
+    getRedirectResult(auth)
+      .then(async (result) => {
+        if (!active || !result?.user) return;
+        setFirebaseUser(result.user);
+        if (result.user.emailVerified) {
+          await hydrateVerifiedUser(result.user);
+        }
+      })
+      .catch((err) => {
+        try {
+          sessionStorage.removeItem(GOOGLE_REDIRECT_DETAILS_KEY);
+        } catch {}
+        if (!active) return;
+        setRedirectError(formatFirebaseAuthError(err));
+      });
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (isRegisteringRef.current) {
         return;
@@ -184,7 +262,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, [hydrateVerifiedUser]);
 
   const signInWithEmailOrEdid = useCallback(async (identifier: string, password: string) => {
@@ -265,6 +346,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = useCallback(
     async (optionalDetails?: Partial<PendingRegistrationDetails>) => {
+      setRedirectError(null);
       pendingGoogleDetailsRef.current = optionalDetails || null;
       try {
         const cred = await signInWithPopup(auth, googleProvider);
@@ -272,6 +354,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await hydrateVerifiedUser(cred.user);
         }
       } catch (err) {
+        const code = (err as any)?.code || '';
+        const shouldFallbackToRedirect =
+          isTopLevelWindow() &&
+          (code === 'auth/popup-blocked' ||
+            code === 'auth/operation-not-supported-in-this-environment');
+
+        if (shouldFallbackToRedirect) {
+          try {
+            if (optionalDetails) {
+              sessionStorage.setItem(
+                GOOGLE_REDIRECT_DETAILS_KEY,
+                JSON.stringify(optionalDetails)
+              );
+            }
+          } catch {}
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        }
+
         pendingGoogleDetailsRef.current = null;
         throw new Error(formatFirebaseAuthError(err));
       }
@@ -341,6 +442,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setNewlyIssuedProfile(null);
   }, []);
 
+  const clearRedirectError = useCallback(() => {
+    setRedirectError(null);
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -349,6 +454,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthReady,
         needsEmailVerification,
         newlyIssuedProfile,
+        redirectError,
+        clearRedirectError,
         dismissNewlyIssuedProfile,
         signInWithEmailOrEdid,
         registerWithEmail,

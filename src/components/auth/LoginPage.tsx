@@ -45,7 +45,7 @@ export const GoogleLogoSvg: React.FC = () => (
 );
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
-  const { signInWithEmailOrEdid, signInWithGoogle } = useAuth();
+  const { signInWithEmailOrEdid, signInWithGoogle, redirectError, clearRedirectError } = useAuth();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -56,10 +56,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
   const [resetMessage, setResetMessage] = useState<string | null>(null);
 
   const detectedEdid = normalizeEdidInput(identifier);
+  const activeError = errorMsg || redirectError;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    clearRedirectError();
     setResetMessage(null);
     setIsSubmitting(true);
     try {
@@ -73,6 +75,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
 
   const handleGoogleSignIn = async () => {
     setErrorMsg(null);
+    clearRedirectError();
     setResetMessage(null);
     setIsGoogleLoading(true);
     try {
@@ -113,13 +116,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToRegister }) => {
         </p>
       </div>
 
-      {errorMsg && (
+      {activeError && (
         <div
           role="alert"
           className="mb-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 px-3.5 py-2.5 flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-300"
         >
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span className="leading-relaxed">{errorMsg}</span>
+          <span className="leading-relaxed">{activeError}</span>
         </div>
       )}
 

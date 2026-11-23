@@ -8,7 +8,16 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
+const envAuthDomain =
+  typeof import.meta !== 'undefined' &&
+  (import.meta as any).env?.VITE_FIREBASE_AUTH_DOMAIN
+    ? String((import.meta as any).env.VITE_FIREBASE_AUTH_DOMAIN).trim()
+    : '';
+
+const app = initializeApp({
+  ...firebaseConfig,
+  authDomain: envAuthDomain || firebaseConfig.authDomain,
+});
 
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);

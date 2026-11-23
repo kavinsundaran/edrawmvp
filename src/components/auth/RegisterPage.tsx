@@ -25,7 +25,7 @@ interface RegisterPageProps {
 }
 
 export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) => {
-  const { registerWithEmail, signInWithGoogle } = useAuth();
+  const { registerWithEmail, signInWithGoogle, redirectError, clearRedirectError } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -40,9 +40,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) =
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const activeError = errorMsg || redirectError;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    clearRedirectError();
 
     if (!fullName.trim()) {
       setErrorMsg('Please enter your full name.');
@@ -79,6 +82,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) =
 
   const handleGoogleRegister = async () => {
     setErrorMsg(null);
+    clearRedirectError();
     setIsGoogleLoading(true);
     try {
       await signInWithGoogle({
@@ -108,13 +112,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin }) =
         </p>
       </div>
 
-      {errorMsg && (
+      {activeError && (
         <div
           role="alert"
           className="mb-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 px-3.5 py-2.5 flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-300"
         >
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span className="leading-relaxed">{errorMsg}</span>
+          <span className="leading-relaxed">{activeError}</span>
         </div>
       )}
 
