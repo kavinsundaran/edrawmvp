@@ -12,6 +12,7 @@ import { DashboardView } from './components/navigation/DashboardView';
 import { PointsModule } from './modules/points/PointsModule';
 import { LinesModule } from './modules/lines/LinesModule';
 import { QuestionToGraphicsGenerator } from './components/questionGenerator/QuestionToGraphicsGenerator';
+import { FeedbackCommunityView } from './components/feedback/FeedbackCommunityView';
 import { ScanQuestionModal } from './components/ScanQuestionModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -47,6 +48,9 @@ export const resolveRoute = (input?: string): AppRoute => {
       : '')
   ).toLowerCase();
 
+  if (target.includes('feedback') || target.includes('community')) {
+    return '/feedback-community';
+  }
   if (target.includes('generator') || target.includes('question') || target.includes('ai')) {
     return '/question-generator';
   }
@@ -224,15 +228,20 @@ const AppShell: React.FC = () => {
         // Fallback for sandboxed iframes without pushState permissions
       }
       try {
+        const currentHash = window.location.hash.replace(/^#/, '');
         const hashTag =
-          resolved === '/question-generator'
+          resolved === '/feedback-community'
+            ? currentHash.startsWith('feedback/')
+              ? currentHash
+              : 'feedback'
+            : resolved === '/question-generator'
             ? 'generator'
             : resolved === '/projection-of-lines'
             ? 'lines'
             : resolved === '/projection-of-points'
             ? 'points'
             : 'dashboard';
-        if (window.location.hash.replace(/^#/, '') !== hashTag) {
+        if (currentHash !== hashTag) {
           window.location.hash = hashTag;
         }
       } catch {}
@@ -277,6 +286,8 @@ const AppShell: React.FC = () => {
 
   const activeSidebarSection: SidebarSectionId = isSettingsOpen
     ? 'settings'
+    : currentRoute === '/feedback-community'
+    ? 'feedback'
     : currentRoute === '/projection-of-points'
     ? 'points'
     : currentRoute === '/projection-of-lines'
@@ -437,6 +448,13 @@ const AppShell: React.FC = () => {
                       onChangeVpColor={setVpColor}
                       isDark={isDark}
                       initialPointInput={pendingScannedPoint || undefined}
+                    />
+                  ) : currentRoute === '/feedback-community' ? (
+                    <FeedbackCommunityView
+                      currentUid={studentProfile.uid}
+                      studentName={learningState.studentName || studentProfile.fullName}
+                      studentEdid={studentProfile.edid}
+                      isDark={isDark}
                     />
                   ) : currentRoute === '/projection-of-lines' ? (
                     <LinesModule

@@ -61,6 +61,16 @@ service cloud.firestore {
         && arr[6] is int && arr[6] >= 0 && arr[6] <= 100000;
     }
 
+    function isValidFeedbackCategory(category) {
+      return category in ['ui-aesthetics', 'ed-knowledge', 'app-bugs', 'new-ideas'];
+    }
+
+    function isValidMentionList(arr) {
+      return arr is list
+        && arr.size() <= 10
+        && (arr.size() == 0 || (arr[0] is string && arr[0].size() >= 1 && arr[0].size() <= 80));
+    }
+
     function isValidStudent(data, uid) {
       return data.keys().hasAll([
           'uid', 'edid', 'fullName', 'email', 'college', 'studentDetails',
@@ -106,6 +116,28 @@ service cloud.firestore {
         && data.authProvider in ['password', 'google']
         && data.encryptedEmail is string && data.encryptedEmail.size() <= 512
         && data.iv is string && data.iv.size() <= 64
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidFeedbackPost(data, postId) {
+      return data.keys().hasAll([
+          'postId', 'category', 'authorUid', 'authorName', 'authorEdid',
+          'content', 'mentions', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'postId', 'category', 'authorUid', 'authorName', 'authorEdid',
+          'content', 'mentions', 'createdAt', 'updatedAt'
+        ])
+        && data.postId == postId
+        && isValidId(data.postId)
+        && isValidFeedbackCategory(data.category)
+        && isValidId(data.authorUid)
+        && data.authorUid == request.auth.uid
+        && data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 80
+        && isValidEdid(data.authorEdid)
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 2000
+        && isValidMentionList(data.mentions)
         && data.createdAt is timestamp
         && data.updatedAt is timestamp;
     }
@@ -179,6 +211,40 @@ service cloud.firestore {
         ]);
 
       allow delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Feedback Community Posts (4 Segregated Boards, Zero PII, Author-Owned Mutations)
+    // -------------------------------------------------------------------------
+    match /feedback_posts/{postId} {
+      allow get: if isValidId(postId) && isVerifiedUser();
+      allow list: if isVerifiedUser() && isValidFeedbackCategory(existing().category);
+
+      allow create: if isValidId(postId)
+        && isVerifiedUser()
+        && isValidFeedbackPost(incoming(), postId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && !exists(/databases/$(database)/documents/feedback_posts/$(postId))
+        && get(/databases/$(database)/documents/students/$(request.auth.uid)).data.edid == incoming().authorEdid;
+
+      allow update: if isValidId(postId)
+        && isVerifiedUser()
+        && existing().authorUid == request.auth.uid
+        && isValidFeedbackPost(incoming(), postId)
+        && incoming().postId == existing().postId
+        && incoming().category == existing().category
+        && incoming().authorUid == existing().authorUid
+        && incoming().authorEdid == existing().authorEdid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'content', 'mentions', 'updatedAt'
+        ]);
+
+      allow delete: if isValidId(postId)
+        && isVerifiedUser()
+        && existing().authorUid == request.auth.uid;
     }
 
     // -------------------------------------------------------------------------

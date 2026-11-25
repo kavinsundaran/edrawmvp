@@ -17,6 +17,7 @@ import {
   FileText,
   BookOpen,
   LogOut,
+  MessageSquare,
 } from 'lucide-react';
 import { PlaneColorPicker } from '../PlaneColorPicker';
 import { AppRoute } from '../../types/modules';
@@ -27,7 +28,7 @@ interface AppHeaderProps {
   currentRoute: AppRoute;
   onNavigate: (route: AppRoute) => void;
   onSelectSection: (
-    section: 'dashboard' | 'points' | 'lines' | 'generator' | 'roadmap' | 'progress',
+    section: 'dashboard' | 'points' | 'lines' | 'generator' | 'roadmap' | 'progress' | 'feedback',
     route?: AppRoute
   ) => void;
   studentName: string;
@@ -129,6 +130,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         action: () => onSelectSection('roadmap', '/dashboard'),
         icon: <BookOpen className="w-4 h-4 text-[#7138E8]" />,
       },
+      {
+        title: 'Feedback Community',
+        category: 'Community · UI, ED Knowledge, Bugs & Ideas',
+        keywords: 'feedback community ui aesthetics ed knowledge bugs login mail ideas mention tag',
+        action: () => onNavigate('/feedback-community'),
+        icon: <MessageSquare className="w-4 h-4 text-[#7138E8]" />,
+      },
     ],
     [onNavigate, onOpenScanModal, onSelectSection]
   );
@@ -173,6 +181,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         title: 'Question-to-Graphics Generator',
         subtitle: 'Parse engineering word problems into orthographic projections',
         badge: 'Coming soon',
+      };
+    }
+    if (currentRoute === '/feedback-community') {
+      return {
+        title: 'Feedback Community',
+        subtitle: 'Segregated boards for UI & Aesthetics, ED Knowledge, App Bugs, and New Ideas',
       };
     }
     return null;

@@ -81,4 +81,22 @@ export const DIRTY_DOZEN_SECURITY_CASES = [
     operation: 'CREATE /students/userA (fullName > 80 chars or visitedModules > 10)',
     expected: 'PERMISSION_DENIED',
   },
+  {
+    id: 13,
+    name: 'Unauthenticated or Unverified Feedback Access',
+    operation: 'LIST /feedback_posts (email_verified: false or unauthenticated)',
+    expected: 'PERMISSION_DENIED',
+  },
+  {
+    id: 14,
+    name: 'Feedback Author / CAPYID Spoofing',
+    operation: 'CREATE /feedback_posts/p1 (authorEdid != students/userA.edid or invalid category)',
+    expected: 'PERMISSION_DENIED',
+  },
+  {
+    id: 15,
+    name: 'Cross-User Feedback Edit or Delete',
+    operation: 'DELETE /feedback_posts/p1 (auth: userB, owner: userA)',
+    expected: 'PERMISSION_DENIED',
+  },
 ] as const;

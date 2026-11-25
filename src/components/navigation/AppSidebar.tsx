@@ -16,6 +16,7 @@ import {
   X,
   PanelLeftClose,
   PanelLeftOpen,
+  MessageSquare,
 } from 'lucide-react';
 import { AppRoute } from '../../types/modules';
 import { CapybaraLogoImg, CapybaraWordmarkImg } from '../BrandAssets';
@@ -27,6 +28,7 @@ export type SidebarSectionId =
   | 'generator'
   | 'roadmap'
   | 'progress'
+  | 'feedback'
   | 'settings';
 
 interface AppSidebarProps {
@@ -93,6 +95,12 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       label: 'Learning Progress',
       icon: <BarChart3 className="w-[18px] h-[18px] shrink-0" />,
       route: '/dashboard',
+    },
+    {
+      id: 'feedback',
+      label: 'Feedback Community',
+      icon: <MessageSquare className="w-[18px] h-[18px] shrink-0" />,
+      route: '/feedback-community',
     },
     {
       id: 'settings',

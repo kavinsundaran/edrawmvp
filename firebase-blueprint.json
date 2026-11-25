@@ -158,6 +158,76 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "FeedbackPost": {
+      "title": "FeedbackPost",
+      "description": "Segregated community feedback comment belonging to one of the four Capybara feedback categories with optional @mentions.",
+      "type": "object",
+      "properties": {
+        "postId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Unique feedback post ID matching the document ID."
+        },
+        "category": {
+          "type": "string",
+          "enum": ["ui-aesthetics", "ed-knowledge", "app-bugs", "new-ideas"],
+          "description": "Segregated feedback board category."
+        },
+        "authorUid": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Firebase Auth UID of the feedback author."
+        },
+        "authorName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Display name of the feedback author (no PII email)."
+        },
+        "authorEdid": {
+          "type": "string",
+          "pattern": "^(CAPYID|EDID)-[0-9]{4}$",
+          "minLength": 9,
+          "maxLength": 11,
+          "description": "Unique Capybara student ID of the author for @mentions."
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Feedback comment body."
+        },
+        "mentions": {
+          "type": "array",
+          "description": "Bounded list (max 10) of mentioned student CAPYIDs."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "postId",
+        "category",
+        "authorUid",
+        "authorName",
+        "authorEdid",
+        "content",
+        "mentions",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -168,6 +238,10 @@
     "/edid_index/{edid}": {
       "schema": { "$ref": "#/entities/EdidIndex" },
       "description": "Atomic unique reservation registry for CAPYID-XXXX identifiers with zero plaintext PII."
+    },
+    "/feedback_posts/{postId}": {
+      "schema": { "$ref": "#/entities/FeedbackPost" },
+      "description": "Segregated community feedback boards (UI & Aesthetics, ED Knowledge, App Bugs, New Ideas & Others) with @mentions and zero PII."
     }
   }
 }
